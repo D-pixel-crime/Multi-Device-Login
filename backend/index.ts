@@ -1,10 +1,13 @@
 import express, { Express, Response, Request } from "express";
 
 const app: Express = express();
-const PORT = 3000;
+const PORT = 2000;
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Hello World!");
+  const device = req.headers;
+  console.log(device);
+
+  res.send(`Hello World! I am being served from a random!`);
 });
 
 app.listen(PORT, () => {
