@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import User from "../schema/user.js";
+import User from "../../schema/user.js";
 passport.serializeUser((user, done) => {
     console.log("Serializing user");
     done(null, user.id);
@@ -29,6 +29,7 @@ passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_OAUTH_CLIENT_ID,
     clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
     callbackURL: "/auth/google/redirect",
+    scope: ["profile", "email"],
 }, (accessToken, refreshToke, profile, done) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("Callback function fired");
     console.log(profile);
@@ -41,6 +42,7 @@ passport.use(new GoogleStrategy({
         }
         const newUser = yield User.create({
             name: profile.displayName,
+            email: profile.emails[0].value,
             googleId: profile.id,
             photo: profile.photos[0].value,
         });

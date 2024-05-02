@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,6 +12,13 @@ import Image from "next/image";
 import googleIcon from "../components/icons/google.svg";
 
 const Login = () => {
+  const googleAuth = () => {
+    window.open(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/google/redirect`,
+      "_self"
+    );
+  };
+
   return (
     <section className="flex-center h-screen">
       <Card>
@@ -20,8 +29,8 @@ const Login = () => {
         <CardContent className="flex-center">
           <div className="flex gap-2">
             <Image src={googleIcon} height={40} width={40} alt="google logo" />
-            <Button className="login-button">
-              <span>Login With Google</span>
+            <Button className="login-button" onClick={googleAuth}>
+              Login With Google
             </Button>
           </div>
         </CardContent>
