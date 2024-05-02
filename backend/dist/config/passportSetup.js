@@ -10,6 +10,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import User from "../schema/user.js";
+passport.serializeUser((user, done) => {
+    console.log("Serializing user");
+    done(null, user.id);
+});
+passport.deserializeUser((id, done) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Deserializing user");
+    try {
+        const user = yield User.findById(id);
+        done(null, user);
+    }
+    catch (error) {
+        console.error(error);
+        done(error, undefined);
+    }
+}));
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_OAUTH_CLIENT_ID,
     clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,

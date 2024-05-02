@@ -2,6 +2,22 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import User from "../schema/user.js";
 
+passport.serializeUser((user: any, done) => {
+  console.log("Serializing user");
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id: string, done) => {
+  console.log("Deserializing user");
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (error: any) {
+    console.error(error);
+    done(error, undefined);
+  }
+});
+
 passport.use(
   new GoogleStrategy(
     {
