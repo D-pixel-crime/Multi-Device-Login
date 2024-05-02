@@ -20,6 +20,14 @@ app.get("/auth/google/redirect", passport.authenticate("google", { failureMessag
     res.status(200).json(user);
     // res.send("You have authenticated and reached the callback URL");
 });
+app.get("/logout", (req, res) => {
+    req.logout((err) => {
+        if (err) {
+            console.error(err);
+        }
+    });
+    res.redirect("/auth/google");
+});
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

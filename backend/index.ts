@@ -36,6 +36,15 @@ app.get(
   }
 );
 
+app.get("/logout", (req, res) => {
+  req.logout((err: any) => {
+    if (err) {
+      console.error(err);
+    }
+  });
+  res.redirect("/auth/google");
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
