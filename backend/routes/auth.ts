@@ -46,33 +46,30 @@ router.get(
   }
 );
 
-router.get("/mailVerification", async (req, res) => {
+router.post("/mailVerification", async (req, res) => {
   const randomOtp = Math.floor(1000 + Math.random() * 9000);
   const hashedOtp = await bcrypt.hash(randomOtp.toString(), 10);
-  const user = req.user;
-  console.log(user);
+  const { currentUser } = req.body;
 
   try {
     const otpDetails = await VerificationOtp.create({
-      userId: user._id,
+      userId: currentUser._id,
       otp: hashedOtp,
       expiry: new Date(Date.now() + 60000),
     });
 
     await transporter.sendMail({
       from: process.env.SENDER_EMAIL,
-      to: user.email,
+      to: currentUser.email,
       subject: "Email Verification",
       html: `<h2>Your verification OTP is <strong>${randomOtp}</strong></h2>`,
     });
 
-    res
-      .status(200)
-      .json({
-        otpDetails: otpDetails,
-        error: false,
-        message: "Email sent successfully",
-      });
+    res.status(200).json({
+      otpDetails: otpDetails,
+      error: false,
+      message: "Email sent successfully",
+    });
   } catch (error) {
     res.status(500).json({ error: true, message: "Failed to send email" });
   }
