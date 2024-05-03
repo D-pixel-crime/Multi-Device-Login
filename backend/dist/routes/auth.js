@@ -14,12 +14,20 @@ import VerificationOtp from "../schema/verificationOtp.js";
 import bcrypt from "bcrypt";
 const router = express.Router();
 const transporter = nodemailer.createTransport({
-    service: "gmail",
-    secure: false,
+    host: "smtp.ethereal.email",
+    port: 587,
     auth: {
-        user: process.env.SENDER_EMAIL,
-        pass: process.env.SENDER_PASSWORD,
+        user: "dameon54@ethereal.email",
+        pass: "NSvWr9aYxecbdwy3e9",
     },
+});
+transporter.verify((error) => {
+    if (error) {
+        console.error(error);
+    }
+    else {
+        console.log("Email server is ready");
+    }
 });
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 router.get("/login/success", (req, res) => {
@@ -73,6 +81,11 @@ router.post("/verifyOtp", (req, res) => __awaiter(void 0, void 0, void 0, functi
     const { input, otpDetails } = req.body;
     try {
         const verificationOtp = yield VerificationOtp.findById(otpDetails._id);
+        if (verificationOtp.expiry < new Date()) {
+            yield VerificationOtp.findByIdAndDelete(otpDetails._id);
+            res.status(401).json({ error: true, message: "OTP expired" });
+            return;
+        }
         if (!verificationOtp) {
             res.status(404).json({
                 message: "No OTP found. Please request a new OTP",
@@ -82,11 +95,6 @@ router.post("/verifyOtp", (req, res) => __awaiter(void 0, void 0, void 0, functi
         const isMatch = yield bcrypt.compare(input, verificationOtp.otp);
         if (!isMatch) {
             res.status(401).json({ message: "Incorrect OTP" });
-            return;
-        }
-        if (verificationOtp.expiry < new Date()) {
-            yield VerificationOtp.findByIdAndDelete(otpDetails._id);
-            res.status(401).json({ error: true, message: "OTP expired" });
             return;
         }
         res.redirect(`${process.env.CLIENT_URL}/profile`);
