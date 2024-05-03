@@ -10,6 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import express from "express";
 import passport from "passport";
 import nodemailer from "nodemailer";
+import VerificationOtp from "../schema/verificationOtp.js";
+import bcrypt from "bcrypt";
 const router = express.Router();
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -34,32 +36,64 @@ router.get("/login/failed", (req, res) => {
     res.status(401).json({ error: true, message: "Failed to log in" });
 });
 router.get("/google/redirect", passport.authenticate("google", {
-    successRedirect: `${process.env.CLIENT_URL}/profile`,
+    successRedirect: `${process.env.CLIENT_URL}/emailVerification`,
     failureRedirect: "/login/failed",
 }), (req, res) => {
     const user = req.user;
     res.status(200).json(user);
 });
-router.get("/mailVerification", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/mailVerification", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const randomOtp = Math.floor(1000 + Math.random() * 9000);
-    const user = req.user;
-    console.log(user);
-    // try {
-    //   await VerificationOtp.create({
-    //     userId: user._id,
-    //     otp: randomOtp,
-    //     expiry: new Date(Date.now() + 60000),
-    //   });
-    //   await transporter.sendMail({
-    //     from: process.env.SENDER_EMAIL,
-    //     to: user.email,
-    //     subject: "Email Verification",
-    //     html: `<h2>Your verification OTP is <strong>${randomOtp}</strong></h2>`,
-    //   });
-    //   res.status(200).json({ error: false, message: "Verification email sent" });
-    // } catch (error) {
-    //   res.status(500).json({ error: true, message: "Failed to send email" });
-    // }
+    const hashedOtp = yield bcrypt.hash(randomOtp.toString(), 10);
+    const { currentUser } = req.body;
+    console.log(currentUser);
+    try {
+        const otpDetails = yield VerificationOtp.create({
+            userId: currentUser._id,
+            otp: hashedOtp,
+            expiry: new Date(Date.now() + 60000),
+        });
+        yield transporter.sendMail({
+            from: process.env.SENDER_EMAIL,
+            to: currentUser.email,
+            subject: "Email Verification",
+            html: `<h2>Your verification OTP is <strong>${randomOtp}</strong></h2>`,
+        });
+        res.status(200).json({
+            otpDetails: otpDetails,
+            error: false,
+            message: "Email sent successfully",
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: true, message: "Failed to send email" });
+    }
+}));
+router.post("/verifyOtp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { input, otpDetails } = req.body;
+    try {
+        const verificationOtp = yield VerificationOtp.findById(otpDetails._id);
+        if (!verificationOtp) {
+            res.status(404).json({
+                message: "No OTP found. Please request a new OTP",
+            });
+            return;
+        }
+        const isMatch = yield bcrypt.compare(input, verificationOtp.otp);
+        if (!isMatch) {
+            res.status(401).json({ message: "Incorrect OTP" });
+            return;
+        }
+        if (verificationOtp.expiry < new Date()) {
+            yield VerificationOtp.findByIdAndDelete(otpDetails._id);
+            res.status(401).json({ error: true, message: "OTP expired" });
+            return;
+        }
+        res.redirect(`${process.env.CLIENT_URL}/profile`);
+    }
+    catch (error) {
+        res.status(500).json({ error: true, message: "Failed to verify OTP" });
+    }
 }));
 router.get("/logout", (req, res) => {
     req.logout((err) => {

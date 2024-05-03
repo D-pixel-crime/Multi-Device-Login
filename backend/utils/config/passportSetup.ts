@@ -28,7 +28,6 @@ passport.use(
     },
     async (accessToken, refreshToke, profile, done) => {
       console.log("Callback function fired");
-      console.log(profile);
 
       try {
         const user = await User.findOne({ googleId: profile.id });

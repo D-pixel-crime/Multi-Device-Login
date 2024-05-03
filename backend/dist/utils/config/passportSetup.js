@@ -32,7 +32,6 @@ passport.use(new GoogleStrategy({
     scope: ["profile", "email"],
 }, (accessToken, refreshToke, profile, done) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("Callback function fired");
-    console.log(profile);
     try {
         const user = yield User.findOne({ googleId: profile.id });
         if (user) {

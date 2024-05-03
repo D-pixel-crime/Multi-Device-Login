@@ -36,7 +36,7 @@ router.get("/login/failed", (req, res) => {
 router.get(
   "/google/redirect",
   passport.authenticate("google", {
-    successRedirect: `${process.env.CLIENT_URL}/profile`,
+    successRedirect: `${process.env.CLIENT_URL}/emailVerification`,
     failureRedirect: "/login/failed",
   }),
   (req, res) => {
@@ -50,6 +50,7 @@ router.post("/mailVerification", async (req, res) => {
   const randomOtp = Math.floor(1000 + Math.random() * 9000);
   const hashedOtp = await bcrypt.hash(randomOtp.toString(), 10);
   const { currentUser } = req.body;
+  console.log(currentUser);
 
   try {
     const otpDetails = await VerificationOtp.create({
@@ -76,15 +77,13 @@ router.post("/mailVerification", async (req, res) => {
 });
 
 router.post("/verifyOtp", async (req, res) => {
-  const { input, otpId } = req.body;
-  const user = req.user;
+  const { input, otpDetails } = req.body;
 
   try {
-    const verificationOtp = await VerificationOtp.findById(otpId);
+    const verificationOtp = await VerificationOtp.findById(otpDetails._id);
 
     if (!verificationOtp) {
       res.status(404).json({
-        error: true,
         message: "No OTP found. Please request a new OTP",
       });
       return;
@@ -93,17 +92,17 @@ router.post("/verifyOtp", async (req, res) => {
     const isMatch = await bcrypt.compare(input, verificationOtp.otp);
 
     if (!isMatch) {
-      res.status(401).json({ error: true, message: "Incorrect OTP" });
+      res.status(401).json({ message: "Incorrect OTP" });
       return;
     }
 
     if (verificationOtp.expiry < new Date()) {
-      await VerificationOtp.findByIdAndDelete(otpId);
+      await VerificationOtp.findByIdAndDelete(otpDetails._id);
       res.status(401).json({ error: true, message: "OTP expired" });
       return;
     }
 
-    res.status(200).json({ error: false, message: "OTP verified" });
+    res.redirect(`${process.env.CLIENT_URL}/profile`);
   } catch (error) {
     res.status(500).json({ error: true, message: "Failed to verify OTP" });
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   InputOTP,
   InputOTPGroup,
@@ -7,12 +8,15 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import axios from "axios";
+import { get } from "http";
 import { useRouter } from "next/navigation";
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 const EmailVerification = () => {
   const [otpDetails, setOtpDetails] = useState(null);
   const [value, setValue] = useState("");
+  const [expiredOrNot, setExpiredOrNot] = useState(false);
+  const [isFirstTime, setIsFirstTime] = useState(true);
   const router = useRouter();
   const [user, setUser] = useState(null);
 
@@ -20,8 +24,13 @@ const EmailVerification = () => {
     try {
       const { data } = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/verifyOtp`,
-        { input: value, otpId: otpDetails!._id }
+        { input: value, otpDetails: otpDetails }
       );
+
+      if (data.error === true) {
+        setExpiredOrNot(true);
+        setOtpDetails(null);
+      }
 
       if (data.success) {
         router.push("/profile");
@@ -35,6 +44,7 @@ const EmailVerification = () => {
     try {
       const url = `${process.env.NEXT_PUBLIC_API_URL}/auth/login/success`;
       const { data } = await axios.get(url, { withCredentials: true });
+
       setUser(data.user);
     } catch (error) {
       console.log(error);
@@ -46,7 +56,7 @@ const EmailVerification = () => {
     try {
       const { data } = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/mailVerification`,
-        { user: user }
+        { currentUser: user }
       );
 
       setOtpDetails(data.otpDetails);
@@ -56,16 +66,21 @@ const EmailVerification = () => {
     }
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     getUser();
-    getOtpDetails();
   }, []);
 
   return (
     <div className="flex-center h-screen w-screen bg-slate-200">
       <div className="border-2 rounded-lg py-5 px-7 flex-center flex-col gap-8">
         <h1 className="text-3xl font-bold">Enter OTP</h1>
-        <form method="post">
+        <form
+          method="post"
+          onSubmit={(e) => {
+            e.preventDefault();
+            verifyOtp();
+          }}
+        >
           <InputOTP
             maxLength={4}
             value={value}
@@ -88,6 +103,25 @@ const EmailVerification = () => {
             </InputOTPGroup>
           </InputOTP>
         </form>
+        {isFirstTime && (
+          <Button
+            onClick={(e) => {
+              e.preventDefault();
+              setIsFirstTime(false);
+              getOtpDetails();
+            }}
+          >
+            Get OTP
+          </Button>
+        )}
+        {expiredOrNot && (
+          <div className="flex-center flex-col">
+            <Button>Resend OTP</Button>
+            <p className="mt-5 text-red-500">
+              *The OTP has expired, please request a new OTP*
+            </p>
+          </div>
+        )}
         {otpDetails && (
           <p className="mt-5 text-red-500">
             *Please check your email for the OTP sent*

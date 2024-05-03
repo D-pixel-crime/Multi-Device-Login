@@ -6,11 +6,15 @@ import { connectToDatabase } from "./utils/DB/database.js";
 import session from "express-session";
 import cors from "cors";
 import { router as authRoutes } from "./routes/auth.js";
+import bodyParser from "body-parser";
 
 connectToDatabase();
 
 const app: Express = express();
 const PORT = process.env.PORT! || 2000;
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(
   session({
