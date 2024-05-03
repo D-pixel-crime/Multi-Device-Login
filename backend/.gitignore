@@ -8,6 +8,7 @@ node_modules
 
 #ENV variables
 .env
+.vscode
 
 # testing
 coverage
