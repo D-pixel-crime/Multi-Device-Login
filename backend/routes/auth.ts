@@ -45,16 +45,14 @@ router.post("/mailVerification", async (req, res) => {
   const hashedOtp = await bcrypt.hash(randomOtp.toString(), 10);
   const { currentUser } = req.body;
 
-  const testAccount = await nodemailer.createTestAccount();
-
   const transporter = nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
+    service: "gmail",
     auth: {
-      user: "clemmie.ryan31@ethereal.email",
-      pass: "6nK88ynwNfYVgQQ4jF",
+      user: process.env.SENDER_EMAIL,
+      pass: process.env.SENDER_PASS,
     },
   });
+
   transporter.verify((error) => {
     if (error) {
       console.error(error);
@@ -70,12 +68,14 @@ router.post("/mailVerification", async (req, res) => {
       expiry: new Date(Date.now() + 60000),
     });
 
-    await transporter.sendMail({
-      from: '"Fred Foo 👻" <clemmie.ryan31@ethereal.email>',
+    const info = await transporter.sendMail({
+      from: `"GameMaster" <${process.env.SENDER_EMAIL}>`,
       to: currentUser.email,
       subject: "Email Verification",
       html: `<h2>Your verification OTP is <strong>${randomOtp}</strong></h2>`,
     });
+
+    console.log(info);
 
     res.status(200).json({
       otpDetails: otpDetails,
