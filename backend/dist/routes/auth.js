@@ -13,22 +13,6 @@ import nodemailer from "nodemailer";
 import VerificationOtp from "../schema/verificationOtp.js";
 import bcrypt from "bcrypt";
 const router = express.Router();
-const transporter = nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
-    auth: {
-        user: "dameon54@ethereal.email",
-        pass: "NSvWr9aYxecbdwy3e9",
-    },
-});
-transporter.verify((error) => {
-    if (error) {
-        console.error(error);
-    }
-    else {
-        console.log("Email server is ready");
-    }
-});
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 router.get("/login/success", (req, res) => {
     if (req.user) {
@@ -44,7 +28,7 @@ router.get("/login/failed", (req, res) => {
     res.status(401).json({ error: true, message: "Failed to log in" });
 });
 router.get("/google/redirect", passport.authenticate("google", {
-    successRedirect: `${process.env.CLIENT_URL}/emailVerification`,
+    successRedirect: `${process.env.CLIENT_URL}/emailVerification/${Math.floor(Math.random() * 100000)}`,
     failureRedirect: "/login/failed",
 }), (req, res) => {
     const user = req.user;
@@ -54,7 +38,23 @@ router.post("/mailVerification", (req, res) => __awaiter(void 0, void 0, void 0,
     const randomOtp = Math.floor(1000 + Math.random() * 9000);
     const hashedOtp = yield bcrypt.hash(randomOtp.toString(), 10);
     const { currentUser } = req.body;
-    console.log(currentUser);
+    const testAccount = yield nodemailer.createTestAccount();
+    const transporter = nodemailer.createTransport({
+        host: "smtp.ethereal.email",
+        port: 587,
+        auth: {
+            user: "clemmie.ryan31@ethereal.email",
+            pass: "6nK88ynwNfYVgQQ4jF",
+        },
+    });
+    transporter.verify((error) => {
+        if (error) {
+            console.error(error);
+        }
+        else {
+            console.log("Email server is ready");
+        }
+    });
     try {
         const otpDetails = yield VerificationOtp.create({
             userId: currentUser._id,
@@ -62,7 +62,7 @@ router.post("/mailVerification", (req, res) => __awaiter(void 0, void 0, void 0,
             expiry: new Date(Date.now() + 60000),
         });
         yield transporter.sendMail({
-            from: process.env.SENDER_EMAIL,
+            from: '"Fred Foo 👻" <clemmie.ryan31@ethereal.email>',
             to: currentUser.email,
             subject: "Email Verification",
             html: `<h2>Your verification OTP is <strong>${randomOtp}</strong></h2>`,

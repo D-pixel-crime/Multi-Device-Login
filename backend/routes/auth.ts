@@ -5,21 +5,6 @@ import VerificationOtp from "../schema/verificationOtp.js";
 import bcrypt from "bcrypt";
 
 const router = express.Router();
-const transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
-  port: 587,
-  auth: {
-    user: "dameon54@ethereal.email",
-    pass: "NSvWr9aYxecbdwy3e9",
-  },
-});
-transporter.verify((error) => {
-  if (error) {
-    console.error(error);
-  } else {
-    console.log("Email server is ready");
-  }
-});
 
 router.get(
   "/google",
@@ -43,7 +28,9 @@ router.get("/login/failed", (req, res) => {
 router.get(
   "/google/redirect",
   passport.authenticate("google", {
-    successRedirect: `${process.env.CLIENT_URL}/emailVerification`,
+    successRedirect: `${process.env.CLIENT_URL}/emailVerification/${Math.floor(
+      Math.random() * 100000
+    )}`,
     failureRedirect: "/login/failed",
   }),
   (req, res) => {
@@ -57,7 +44,24 @@ router.post("/mailVerification", async (req, res) => {
   const randomOtp = Math.floor(1000 + Math.random() * 9000);
   const hashedOtp = await bcrypt.hash(randomOtp.toString(), 10);
   const { currentUser } = req.body;
-  console.log(currentUser);
+
+  const testAccount = await nodemailer.createTestAccount();
+
+  const transporter = nodemailer.createTransport({
+    host: "smtp.ethereal.email",
+    port: 587,
+    auth: {
+      user: "clemmie.ryan31@ethereal.email",
+      pass: "6nK88ynwNfYVgQQ4jF",
+    },
+  });
+  transporter.verify((error) => {
+    if (error) {
+      console.error(error);
+    } else {
+      console.log("Email server is ready");
+    }
+  });
 
   try {
     const otpDetails = await VerificationOtp.create({
@@ -67,7 +71,7 @@ router.post("/mailVerification", async (req, res) => {
     });
 
     await transporter.sendMail({
-      from: process.env.SENDER_EMAIL,
+      from: '"Fred Foo 👻" <clemmie.ryan31@ethereal.email>',
       to: currentUser.email,
       subject: "Email Verification",
       html: `<h2>Your verification OTP is <strong>${randomOtp}</strong></h2>`,

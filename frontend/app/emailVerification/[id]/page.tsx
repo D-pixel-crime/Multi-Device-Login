@@ -15,6 +15,7 @@ import { useEffect, useLayoutEffect, useState } from "react";
 const EmailVerification = () => {
   const [otpDetails, setOtpDetails] = useState(null);
   const [value, setValue] = useState("");
+  const [inCorrectOtp, setInCorrectOtp] = useState(false);
   const [expiredOrNot, setExpiredOrNot] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(true);
   const router = useRouter();
@@ -27,16 +28,16 @@ const EmailVerification = () => {
         { input: value, otpDetails: otpDetails }
       );
 
-      if (data.error === true) {
-        setExpiredOrNot(true);
-        setOtpDetails(null);
-      }
-
       if (data.success) {
         router.push("/profile");
       }
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      console.log(error.response);
+      if (error.response.data.error === true) {
+        setExpiredOrNot(true);
+        setOtpDetails(null);
+        setInCorrectOtp(false);
+      } else setInCorrectOtp(true);
     }
   };
 
@@ -59,7 +60,10 @@ const EmailVerification = () => {
         { currentUser: user }
       );
 
+      setValue("");
       setOtpDetails(data.otpDetails);
+      setInCorrectOtp(false);
+      setExpiredOrNot(false);
     } catch (error) {
       console.log(error);
       router.push("/");
@@ -116,14 +120,22 @@ const EmailVerification = () => {
         )}
         {expiredOrNot && (
           <div className="flex-center flex-col">
-            <Button>Resend OTP</Button>
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                getOtpDetails();
+              }}
+            >
+              Resend OTP
+            </Button>
             <p className="mt-5 text-red-500">
               *The OTP has expired, please request a new OTP*
             </p>
           </div>
         )}
+        {inCorrectOtp && <p className="text-red-500">*Incorrect OTP*</p>}
         {otpDetails && (
-          <p className="mt-5 text-red-500">
+          <p className="mt-5 text-green-600">
             *Please check your email for the OTP sent*
           </p>
         )}
