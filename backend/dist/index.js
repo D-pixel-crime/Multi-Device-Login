@@ -6,6 +6,7 @@ import { connectToDatabase } from "./utils/DB/database.js";
 import session from "express-session";
 import cors from "cors";
 import { router as authRoutes } from "./routes/auth.js";
+import { router as devicesRoutes } from "./routes/devices.js";
 import bodyParser from "body-parser";
 connectToDatabase();
 const app = express();
@@ -30,6 +31,7 @@ app.use(cors({
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
 }));
 app.use("/auth", authRoutes);
+app.use("/devices", devicesRoutes);
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
