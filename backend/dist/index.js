@@ -10,6 +10,11 @@ import bodyParser from "body-parser";
 connectToDatabase();
 const app = express();
 const PORT = process.env.PORT || 2000;
+app.use(cors({
+    origin: "*",
+    credentials: true,
+    optionsSuccessStatus: 200,
+}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({

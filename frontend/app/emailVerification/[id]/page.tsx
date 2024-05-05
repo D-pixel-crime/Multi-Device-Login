@@ -8,9 +8,9 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import axios from "axios";
-import { get } from "http";
 import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
+import { useCookies } from "react-cookie";
 
 const EmailVerification = () => {
   const [otpDetails, setOtpDetails] = useState(null);
@@ -20,6 +20,7 @@ const EmailVerification = () => {
   const [isFirstTime, setIsFirstTime] = useState(true);
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [cookies, setCookies] = useCookies(["user"]);
 
   const verifyOtp = async () => {
     try {
@@ -28,7 +29,11 @@ const EmailVerification = () => {
         { input: value, otpDetails: otpDetails }
       );
 
-      if (data.success) {
+      if (data.isMatch) {
+        setCookies("user", user, {
+          path: "/",
+          expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
+        });
         router.push("/profile");
       }
     } catch (error: any) {

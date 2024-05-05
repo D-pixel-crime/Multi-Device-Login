@@ -4,6 +4,25 @@ import nodemailer from "nodemailer";
 import VerificationOtp from "../schema/verificationOtp.js";
 import bcrypt from "bcrypt";
 
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.SENDER_EMAIL,
+    pass: process.env.SENDER_APP_PASSWORD,
+  },
+});
+
+transporter.verify((error) => {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log("Email server is ready");
+  }
+});
+
 const router = express.Router();
 
 router.get(
@@ -45,22 +64,6 @@ router.post("/mailVerification", async (req, res) => {
   const hashedOtp = await bcrypt.hash(randomOtp.toString(), 10);
   const { currentUser } = req.body;
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.SENDER_EMAIL,
-      pass: process.env.SENDER_PASS,
-    },
-  });
-
-  transporter.verify((error) => {
-    if (error) {
-      console.error(error);
-    } else {
-      console.log("Email server is ready");
-    }
-  });
-
   try {
     const otpDetails = await VerificationOtp.create({
       userId: currentUser._id,
@@ -69,7 +72,10 @@ router.post("/mailVerification", async (req, res) => {
     });
 
     const info = await transporter.sendMail({
-      from: `"GameMaster" <${process.env.SENDER_EMAIL}>`,
+      from: {
+        name: "Random Guy",
+        address: process.env.SENDER_EMAIL!,
+      },
       to: currentUser.email,
       subject: "Email Verification",
       html: `<h2>Your verification OTP is <strong>${randomOtp}</strong></h2>`,
@@ -113,7 +119,9 @@ router.post("/verifyOtp", async (req, res) => {
       return;
     }
 
-    res.redirect(`${process.env.CLIENT_URL}/profile`);
+    res
+      .status(200)
+      .json({ isMatch: true, message: "OTP verified successfully" });
   } catch (error) {
     res.status(500).json({ error: true, message: "Failed to verify OTP" });
   }
