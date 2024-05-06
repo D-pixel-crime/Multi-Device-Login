@@ -3,6 +3,8 @@ import passport from "passport";
 import nodemailer from "nodemailer";
 import VerificationOtp from "../schema/verificationOtp.js";
 import bcrypt from "bcrypt";
+import parser from "ua-parser-js";
+import Devices from "../schema/devices.js";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -127,7 +129,18 @@ router.post("/verifyOtp", async (req, res) => {
   }
 });
 
-router.get("/logout", (req, res) => {
+router.get("/logout/:userId", async (req, res) => {
+  const userId = req.params.userId;
+  const parsedUserAgent = parser(req.headers["user-agent"]);
+
+  try {
+    await Devices.findOneAndUpdate(
+      { fullInfo: parsedUserAgent, user: userId },
+      { isLoggedIn: false }
+    );
+  } catch (error) {
+    console.error(error);
+  }
   req.logout((err: any) => {
     if (err) {
       console.error(err);
