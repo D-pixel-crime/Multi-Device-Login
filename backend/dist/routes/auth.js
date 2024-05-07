@@ -12,7 +12,7 @@ import passport from "passport";
 import nodemailer from "nodemailer";
 import VerificationOtp from "../schema/verificationOtp.js";
 import bcrypt from "bcrypt";
-import parser from "ua-parser-js";
+import Devices from "../schema/devices.js";
 const transporter = nodemailer.createTransport({
     service: "gmail",
     host: "smtp.gmail.com",
@@ -111,22 +111,18 @@ router.post("/verifyOtp", (req, res) => __awaiter(void 0, void 0, void 0, functi
         res.status(500).json({ error: true, message: "Failed to verify OTP" });
     }
 }));
-router.get("/logout/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/logout/:userId/:deviceId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.userId;
-    const parsedUserAgent = parser(req.headers["user-agent"]);
-    // try {
-    //   await Devices.findOneAndUpdate(
-    //     { fullInfo: parsedUserAgent, user: userId },
-    //     { isLoggedIn: false }
-    //   );
-    // } catch (error) {
-    //   console.error(error);
-    // }
-    // req.logout((err: any) => {
-    //   if (err) {
-    //     console.error(err);
-    //   }
-    // });
-    res.redirect(process.env.CLIENT_URL);
+    try {
+        yield Devices.findByIdAndUpdate({
+            _id: req.params.deviceId,
+        }, {
+            isLoggedIn: false,
+        });
+        res.redirect(process.env.CLIENT_URL);
+    }
+    catch (error) {
+        res.status(500).json({ error: true, message: "Failed to log out" });
+    }
 }));
 export { router };

@@ -129,24 +129,23 @@ router.post("/verifyOtp", async (req, res) => {
   }
 });
 
-router.get("/logout/:userId", async (req, res) => {
+router.get("/logout/:userId/:deviceId", async (req, res) => {
   const userId = req.params.userId;
-  const parsedUserAgent = parser(req.headers["user-agent"]);
 
-  // try {
-  //   await Devices.findOneAndUpdate(
-  //     { fullInfo: parsedUserAgent, user: userId },
-  //     { isLoggedIn: false }
-  //   );
-  // } catch (error) {
-  //   console.error(error);
-  // }
-  // req.logout((err: any) => {
-  //   if (err) {
-  //     console.error(err);
-  //   }
-  // });
-  res.redirect(process.env.CLIENT_URL!);
+  try {
+    await Devices.findByIdAndUpdate(
+      {
+        _id: req.params.deviceId,
+      },
+      {
+        isLoggedIn: false,
+      }
+    );
+
+    res.redirect(process.env.CLIENT_URL!);
+  } catch (error) {
+    res.status(500).json({ error: true, message: "Failed to log out" });
+  }
 });
 
 export { router };

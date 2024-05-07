@@ -32,7 +32,7 @@ router.get("/:userId/new", (req, res) => __awaiter(void 0, void 0, void 0, funct
     const parseUserAgent = parser(req.headers["user-agent"]);
     const ipAddress = req.ip;
     try {
-        yield Devices.create({
+        const newDevice = yield Devices.create({
             fullInfo: parseUserAgent,
             ipAddress,
             user: userId,
@@ -40,7 +40,7 @@ router.get("/:userId/new", (req, res) => __awaiter(void 0, void 0, void 0, funct
             lastLoggedIn: new Date().toLocaleString(),
         });
         const allDevices = yield Devices.find({ user: userId });
-        res.status(200).json({ allDevices });
+        res.status(200).json({ allDevices, newDevice });
     }
     catch (error) {
         res.status(500).json({ error: true, message: "Failed to add device" });

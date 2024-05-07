@@ -33,7 +33,7 @@ router.get("/:userId/new", async (req, res) => {
   const ipAddress = req.ip;
 
   try {
-    await Devices.create({
+    const newDevice = await Devices.create({
       fullInfo: parseUserAgent,
       ipAddress,
       user: userId,
@@ -43,7 +43,7 @@ router.get("/:userId/new", async (req, res) => {
 
     const allDevices = await Devices.find({ user: userId });
 
-    res.status(200).json({ allDevices });
+    res.status(200).json({ allDevices, newDevice });
   } catch (error) {
     res.status(500).json({ error: true, message: "Failed to add device" });
   }

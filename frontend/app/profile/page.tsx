@@ -13,11 +13,11 @@ const Profile = () => {
   const deviceId = localStorage.getItem("deviceId");
 
   const logout = () => {
+    removeCookies("user");
     window.open(
       `${process.env.NEXT_PUBLIC_API_URL}/auth/logout/${cookies.user._id}`,
       "_self"
     );
-    removeCookies("user");
   };
 
   const getDevices = async () => {
@@ -34,6 +34,7 @@ const Profile = () => {
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/devices/${cookies.user._id}/new`
       );
+      localStorage.setItem("deviceId", data.newDevice._id);
       setAllDevices(data.allDevices);
       console.log(data.allDevices);
 
