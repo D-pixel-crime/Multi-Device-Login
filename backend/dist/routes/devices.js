@@ -8,12 +8,42 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import express from "express";
+import Devices from "../schema/devices.js";
 import parser from "ua-parser-js";
 const router = express.Router();
-router.get("/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/:userId/:deviceId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.userId;
-    const userAgent = req.headers["user-agent"];
-    console.log(parser(userAgent));
-    res.status(200).send("OK");
+    const deviceId = req.params.deviceId;
+    try {
+        yield Devices.findByIdAndUpdate({
+            _id: deviceId,
+        }, {
+            lastLoggedIn: new Date().toLocaleString(),
+        });
+        const allDevices = yield Devices.find({ user: userId });
+        res.status(200).json({ allDevices });
+    }
+    catch (error) {
+        res.status(500).json({ error: true, message: "Failed to update device" });
+    }
+}));
+router.get("/:userId/new", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.params.userId;
+    const parseUserAgent = parser(req.headers["user-agent"]);
+    const ipAddress = req.ip;
+    try {
+        yield Devices.create({
+            fullInfo: parseUserAgent,
+            ipAddress,
+            user: userId,
+            isLoggedIn: true,
+            lastLoggedIn: new Date().toLocaleString(),
+        });
+        const allDevices = yield Devices.find({ user: userId });
+        res.status(200).json({ allDevices });
+    }
+    catch (error) {
+        res.status(500).json({ error: true, message: "Failed to add device" });
+    }
 }));
 export { router };

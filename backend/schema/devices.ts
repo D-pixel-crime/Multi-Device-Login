@@ -2,6 +2,7 @@ import mongoose, { Model } from "mongoose";
 
 const devicesSchema = new mongoose.Schema({
   fullInfo: Object,
+  ipAddress: String,
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

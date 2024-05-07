@@ -8,18 +8,39 @@ import { useCookies } from "react-cookie";
 
 const Profile = () => {
   const [cookies, setCookies, removeCookies] = useCookies(["user"]);
+  const [allDevices, setAllDevices] = useState([]);
   const router = useRouter();
+  const deviceId = localStorage.getItem("deviceId");
 
   const logout = () => {
-    window.open(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, "_self");
+    window.open(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/logout/${cookies.user._id}`,
+      "_self"
+    );
     removeCookies("user");
   };
 
   const getDevices = async () => {
-    const { data } = await axios.get(
-      `${process.env.NEXT_PUBLIC_API_URL}/devices/${cookies.user._id}`
-    );
-    console.log(data);
+    try {
+      if (deviceId) {
+        const { data } = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/devices/${cookies.user._id}/${deviceId}`
+        );
+        setAllDevices(data.allDevices);
+        console.log(data.allDevices);
+
+        return;
+      }
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/devices/${cookies.user._id}/new`
+      );
+      setAllDevices(data.allDevices);
+      console.log(data.allDevices);
+
+      return;
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {

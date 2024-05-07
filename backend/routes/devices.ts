@@ -1,43 +1,51 @@
 import axios from "axios";
 import express from "express";
 import Devices from "../schema/devices.js";
-import { log } from "console";
 import parser from "ua-parser-js";
 
 const router = express.Router();
 
-router.get("/:userId", async (req, res) => {
+router.get("/:userId/:deviceId", async (req, res) => {
   const userId = req.params.userId;
-  const userAgent = req.headers["user-agent"];
+  const deviceId = req.params.deviceId;
 
   try {
-    const deviceInfo = parser(userAgent);
-
-    const isAlreadyThere = await Devices.findOne(
-      { fullInfo: deviceInfo },
-      { user: userId }
+    await Devices.findByIdAndUpdate(
+      {
+        _id: deviceId,
+      },
+      {
+        lastLoggedIn: new Date().toLocaleString(),
+      }
     );
 
-    if (isAlreadyThere) {
-      await Devices.findByIdAndUpdate(isAlreadyThere._id, {
-        isLoggedIn: true,
-        lastLoggedIn: new Date().toUTCString(),
-      });
-    } else {
-      await Devices.create({
-        fullInfo: deviceInfo,
-        user: userId,
-        isLoggedIn: true,
-        lastLoggedIn: new Date().toUTCString(),
-      });
-    }
+    const allDevices = await Devices.find({ user: userId });
 
-    const devices = await Devices.find({ user: userId });
-
-    res.status(200).json({ allDevices: devices });
+    res.status(200).json({ allDevices });
   } catch (error) {
-    log(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: true, message: "Failed to update device" });
+  }
+});
+
+router.get("/:userId/new", async (req, res) => {
+  const userId = req.params.userId;
+  const parseUserAgent = parser(req.headers["user-agent"]);
+  const ipAddress = req.ip;
+
+  try {
+    await Devices.create({
+      fullInfo: parseUserAgent,
+      ipAddress,
+      user: userId,
+      isLoggedIn: true,
+      lastLoggedIn: new Date().toLocaleString(),
+    });
+
+    const allDevices = await Devices.find({ user: userId });
+
+    res.status(200).json({ allDevices });
+  } catch (error) {
+    res.status(500).json({ error: true, message: "Failed to add device" });
   }
 });
 

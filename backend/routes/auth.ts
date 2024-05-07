@@ -133,19 +133,19 @@ router.get("/logout/:userId", async (req, res) => {
   const userId = req.params.userId;
   const parsedUserAgent = parser(req.headers["user-agent"]);
 
-  try {
-    await Devices.findOneAndUpdate(
-      { fullInfo: parsedUserAgent, user: userId },
-      { isLoggedIn: false }
-    );
-  } catch (error) {
-    console.error(error);
-  }
-  req.logout((err: any) => {
-    if (err) {
-      console.error(err);
-    }
-  });
+  // try {
+  //   await Devices.findOneAndUpdate(
+  //     { fullInfo: parsedUserAgent, user: userId },
+  //     { isLoggedIn: false }
+  //   );
+  // } catch (error) {
+  //   console.error(error);
+  // }
+  // req.logout((err: any) => {
+  //   if (err) {
+  //     console.error(err);
+  //   }
+  // });
   res.redirect(process.env.CLIENT_URL!);
 });
 
